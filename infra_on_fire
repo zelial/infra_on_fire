@@ -1,0 +1,96 @@
+#!/usr/bin/python
+
+"""
+A service reading status of infrastructure and translating
+it to commands for the esp-based periphery.
+This is the brain where translation of a service failure to LED
+blinking happens. Also the piece that is authenticated.
+"""
+import datetime
+import subprocess
+import requests
+import time
+from typing import List, Dict
+
+
+def _esp_send_comand(page: str, params: Dict[str, str]):
+    """ do a GET request to the esp board """
+    url: str = "http://192.168.1.15/"
+    requests.get(url + page, params=params)
+
+
+def esp_show_text(message):
+    """ show text on the esp board's display """
+    _esp_send_comand("text", {"message": message})
+
+
+def esp_led(led: str, state: str):
+    """ set red/green LED state
+    valid states are: on, off, blink """
+    if led not in ('red', 'green'):
+        raise Exception("Unknown LED color")
+    if state not in ('on', 'off', 'blink'):
+        raise Exception("Unknown LED state")
+    _esp_send_comand(led, {"state": state})
+
+
+def esp_green(state: str):
+    """ set green LED state
+    valid states are: on, off, blink """
+    _esp_send_comand("green", {"state": state})
+
+
+def main():
+    failures: List[str] = []
+    while True:
+        print(datetime.datetime.now())
+        new_failures: List[str] = []
+        # get all the non-acknowledged failures from Nagios
+        p = subprocess.run(['/home/zelial/pub/udelatory/infra-status', '-n', '-f', '-a'], capture_output=True)
+        if len(p.stderr.decode("utf-8")) > 0:
+            print(p.stderr.decode("utf-8"))
+            esp_show_text("infra-status error")
+            esp_led("red", "on")
+            esp_led("green", "on")
+            time.sleep(60)
+            continue
+        if "Either you supplied" in p.stdout.decode("utf-8"):
+            print("failed infra-status call, expired kerberos ticket?")
+            esp_show_text("expired kerberos")
+            esp_led("red", "on")
+            esp_led("green", "on")
+            time.sleep(60)
+            continue
+        for line in p.stdout.decode("utf-8").split("\n"):
+            if line == "":
+                continue
+            service = ".".join(line.split(":")[0].split(".")[2:])
+            new_failures.append(service)
+        # fixed services
+        for old_failure in failures:
+            if old_failure not in new_failures:
+                print(f"fixed: {old_failure}")
+                esp_led("green", "blink")
+                esp_show_text(old_failure)
+                time.sleep(3)
+        # newly broken services
+        for failure in new_failures:
+            if failure not in failures:
+                print(f"broken: {failure}")
+                esp_show_text(failure)
+                esp_led("red", "blink")
+                time.sleep(3)
+        # no failure
+        if len(new_failures) == 0:
+            esp_led("red", "off")
+            esp_led("green", "on")
+        else:
+            esp_led("green", "off")
+            esp_led("red", "on")
+
+        failures = new_failures
+        time.sleep(60)
+
+
+if __name__ == "__main__":
+    main()
