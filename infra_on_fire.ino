@@ -1,9 +1,11 @@
-#include <utils.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ESP8266WebServer.h>
+// https://github.com/zelial/arduino-library-utils
+#include <utils.h>
+
 #include "config.h"
 
 // Setup basic 128x32 OLED
