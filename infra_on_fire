@@ -16,7 +16,10 @@ from typing import List, Dict
 def _esp_send_comand(page: str, params: Dict[str, str]):
     """ do a GET request to the esp board """
     url: str = "http://192.168.1.15/"
-    requests.get(url + page, params=params)
+    try:
+        requests.get(url + page, params=params)
+    except requests.exceptions.ConnectionError as e:
+        print(f"connection error: {e}")
 
 
 def esp_show_text(message):
@@ -42,6 +45,7 @@ def esp_green(state: str):
 
 def main():
     failures: List[str] = []
+    esp_show_text("service started")
     while True:
         print(datetime.datetime.now())
         new_failures: List[str] = []
