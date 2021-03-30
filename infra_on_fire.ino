@@ -40,14 +40,20 @@ long GREEN_BLINK_TIMEOUT = 0;
 boolean RED_ON = false;
 boolean GREEN_ON = false;
 
+
+// timestamp of last client request to indicate we have fresh data
+long LAST_REQUEST = 0;
+// how long since last request we consider current state valid
+// after that we show header again
+// 5 minutes in millis
+long DATA_FRESHNESS = 5*60*1000;
+
 void setup() {
   // LED controlling pins
   // red
   pinMode(RED_PIN, OUTPUT);
-  digitalWrite(RED_PIN, LOW);
   // green
   pinMode(GREEN_PIN, OUTPUT);
-  digitalWrite(GREEN_PIN, LOW);
   
   init_serial();
   logln("ima alive");
@@ -58,13 +64,6 @@ void setup() {
   server.on("/red", handle_red);
   server.on("/green", handle_green);
 
-  /*server.on("/", handle_OnConnect);
-  server.on("/led1on", handle_led1on);
-  server.on("/led1off", handle_led1off);
-  server.on("/led2on", handle_led2on);
-  server.on("/led2off", handle_led2off);
-  server.onNotFound(handle_not_found);
-  */
   server.begin();
 
  // init display
@@ -83,11 +82,15 @@ void setup() {
 }
 
 void loop() {
-  
+
+  // no client has connected for DATA_FRESHNESS millis
+  if (millis() > (LAST_REQUEST + DATA_FRESHNESS)){
+      DISPLAY_HEADER = true;
+  }
   if (DISPLAY_HEADER){
       display_header();
   }
-  
+
   server.handleClient();
 
   // stop showing text after timeout
@@ -134,11 +137,14 @@ void loop() {
 
 void display_header(){
   display.clearDisplay();
+  display.setTextSize(1);
   display.setCursor(0,0);
   display.println("InfraStatus v" + String(version));
   display.println(WiFi.localIP());
   display.println(millis() / 1000);
   display.display();
+  RED_ON=true;
+  GREEN_ON=true;
 }
 
 void handle_not_found(){
@@ -155,6 +161,7 @@ void handle_text() {
   display.display();
   DISPLAY_TIMEOUT = millis() + TEXT_TIMEOUT;
   DISPLAY_HEADER = false;
+  LAST_REQUEST = millis();
 }
 
 
@@ -174,6 +181,12 @@ void handle_red() {
       RED_BLINK_TIMEOUT = millis() + BLINK_TIMEOUT;
   }
   DISPLAY_HEADER = false;
+  // clear the welcome message on first client request
+  if (LAST_REQUEST == 0){
+      display.clearDisplay();
+      display.display();
+  }
+  LAST_REQUEST = millis();
 }
 
 
@@ -193,4 +206,10 @@ void handle_green() {
       GREEN_BLINK_TIMEOUT = millis() + BLINK_TIMEOUT;
   }
   DISPLAY_HEADER = false;
+  // clear the welcome message on first client request
+  if (LAST_REQUEST == 0){
+      display.clearDisplay();
+      display.display();
+  }
+  LAST_REQUEST = millis();
 }
