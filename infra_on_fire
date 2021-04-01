@@ -18,7 +18,7 @@ def _esp_send_comand(page: str, params: Dict[str, str]):
     url: str = "http://192.168.1.15/"
     try:
         requests.get(url + page, params=params)
-    except requests.exceptions.ConnectionError as e:
+    except Exception as e:
         print(f"connection error: {e}")
 
 
