@@ -14,9 +14,9 @@
 Adafruit_SSD1306 display(128, 32, &Wire, 2);
 
 // Red LED PIN
-#define RED_PIN D5
+#define RED_PIN D6
 //Green LED PIN
-#define GREEN_PIN D6
+#define GREEN_PIN D5
 
 ESP8266WebServer server(80);
 
@@ -143,8 +143,10 @@ void display_header(){
   display.println(WiFi.localIP());
   display.println(millis() / 1000);
   display.display();
-  RED_ON=true;
-  GREEN_ON=true;
+  RED_ON=false;
+  GREEN_ON=false;
+  GREEN_BLINK_TIMEOUT = millis() + BLINK_TIMEOUT;
+  RED_BLINK_TIMEOUT = GREEN_BLINK_TIMEOUT;
 }
 
 void handle_not_found(){
