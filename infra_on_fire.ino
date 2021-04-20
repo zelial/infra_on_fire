@@ -79,6 +79,10 @@ void setup() {
   }
   // upside down (pins on right)
   display.setRotation(2);
+
+  // blink at the start to "test" LEDs
+  GREEN_BLINK_TIMEOUT = millis() + BLINK_TIMEOUT;
+  RED_BLINK_TIMEOUT = GREEN_BLINK_TIMEOUT;
 }
 
 void loop() {
@@ -138,15 +142,14 @@ void loop() {
 void display_header(){
   display.clearDisplay();
   display.setTextSize(1);
-  display.setCursor(0,0);
+  // attempt at a screen saver to move the text around a bit
+  display.setCursor(0, (millis() / 1000) % 30);
   display.println("InfraStatus v" + String(version));
   display.println(WiFi.localIP());
   display.println(millis() / 1000);
   display.display();
   RED_ON=false;
   GREEN_ON=false;
-  GREEN_BLINK_TIMEOUT = millis() + BLINK_TIMEOUT;
-  RED_BLINK_TIMEOUT = GREEN_BLINK_TIMEOUT;
 }
 
 void handle_not_found(){
