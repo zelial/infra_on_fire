@@ -9,6 +9,7 @@ blinking happens. Also the piece that is authenticated.
 import datetime
 import subprocess
 import requests
+import socket
 import time
 from typing import List, Dict
 
@@ -45,12 +46,31 @@ def esp_green(state: str):
 
 def main():
     failures: List[str] = []
+    # were we able to get the infra status properly?
     esp_show_text("service started")
     while True:
         print(datetime.datetime.now())
         new_failures: List[str] = []
+
+        # check if we're actually on company network =
+        # local home hostname doesn't resolve.
+        # to not bother me when @ home
+        try:
+            socket.gethostbyname('krapnik.zelial.cz')
+            # it resolves - we're on home network
+            print("VPN not active")
+            esp_led("red", "off")
+            esp_led("green", "off")
+            time.sleep(60)
+            continue
+        except socket.gaierror:
+            # it doesn't resolve so hopefully we're on VPN
+            pass
+
         # get all the non-acknowledged failures from Nagios
-        p = subprocess.run(['/home/zelial/pub/udelatory/infra-status', '-n', '-f', '-a'], capture_output=True)
+        p = subprocess.run(['/home/zelial/pub/udelatory/infra-status',
+                            '-n', '-f', '-a'], capture_output=True)
+        # error handing
         if len(p.stderr.decode("utf-8")) > 0:
             print(p.stderr.decode("utf-8"))
             esp_show_text("infra-status error")
@@ -65,6 +85,8 @@ def main():
             esp_led("green", "on")
             time.sleep(60)
             continue
+
+        # correct response handling
         for line in p.stdout.decode("utf-8").split("\n"):
             if line == "":
                 continue
