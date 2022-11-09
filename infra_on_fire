@@ -16,7 +16,7 @@ from typing import List, Dict
 
 def _esp_send_comand(page: str, params: Dict[str, str]):
     """ do a GET request to the esp board """
-    url: str = "http://192.168.1.15/"
+    url: str = "http://10.42.0.15/"
     try:
         requests.get(url + page, params=params)
     except Exception as e:
@@ -53,19 +53,18 @@ def main():
         new_failures: List[str] = []
 
         # check if we're actually on company network =
-        # local home hostname doesn't resolve.
+        # company-internal hostname resolves.
         # to not bother me when @ home
         try:
-            socket.gethostbyname('krapnik.zelial.cz')
-            # it resolves - we're on home network
+            socket.gethostbyname('liver2.lab.eng.brq2.redhat.com')
+            # it resolves - we're on company network
+            pass
+        except socket.gaierror:
             print("VPN not active")
             esp_led("red", "off")
             esp_led("green", "off")
             time.sleep(60)
             continue
-        except socket.gaierror:
-            # it doesn't resolve so hopefully we're on VPN
-            pass
 
         # get all the non-acknowledged failures from Nagios
         p = subprocess.run(['/home/zelial/pub/udelatory/infra-status',

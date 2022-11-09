@@ -7,9 +7,9 @@ Documentation=https://github.com/zelial/infra_on_fire
 User=zelial
 Group=zelial
 # when binary in non-traditinal dir for binaries:
-# semanage fcontext -a -t bin_t /home/zelial/pub/infra_on_fire/infra_on_fire
-# restorecon -Rv /home/zelial/pub/infra_on_fire/
-ExecStart=/home/zelial/pub/infra_on_fire/infra_on_fire
+# semanage fcontext -a -t bin_t /home/zelial/pub/smart-home/infra_on_fire/infra_on_fire
+# restorecon -Rv /home/zelial/pub/smart-home/infra_on_fire/
+ExecStart=/home/zelial/pub/smart-home/infra_on_fire/infra_on_fire
 Restart=Always
 
 [Install]
